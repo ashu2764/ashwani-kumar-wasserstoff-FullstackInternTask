@@ -1,4 +1,6 @@
 ## Microsercvice for User Management and Auction Management
+## POSTMAN DOCUMENTATION 
+    https://documenter.getpostman.com/view/28173427/2sAXjF9uoS
 
 ## User Management API
 This API is part of a microservices architecture that handles user management and authentication for a larger auction bidding system. The following endpoints allow for user registration, login, logout, token refresh, and admin authentication.
