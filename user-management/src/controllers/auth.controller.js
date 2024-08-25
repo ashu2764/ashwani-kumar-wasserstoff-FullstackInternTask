@@ -10,6 +10,11 @@ import jwt from "jsonwebtoken";
 const generateAccessAndRefreshToken = async (userId) => {
     try {
         const user = await User.findById(userId);
+
+        if (!user) {
+            throw new ApiError(404, "User not found"); // Throw an error if user is null
+        }
+
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
 
@@ -18,9 +23,10 @@ const generateAccessAndRefreshToken = async (userId) => {
 
         return { accessToken, refreshToken };
     } catch (error) {
+        console.error("Error generating tokens:", error);
         throw new ApiError(
-            500,
-            "Something went wrong while generating refresh and access token"
+            error.statusCode || 500,
+            error.message || "Something went wrong while generating refresh and access token"
         );
     }
 };
@@ -47,7 +53,7 @@ const registerUser = asyncHandler(async (req, res) => {
             "User with this email or username is already existed"
         );
     }
-    
+
     //if everyThing is ok then create user
     const user = await User.create({
         email,
@@ -152,85 +158,83 @@ const logOutUser = asyncHandler(async (req, res) => {
 
 // ADMIN LOGIN   Controller
 
-const adminLogin = asyncHandler(async(req,res)=>{
-    const {secret} = req.body;
+const adminLogin = asyncHandler(async (req, res) => {
+    const { secret } = req.body;
 
-    if(!secret){
+    if (!secret) {
         throw new ApiError(404, "Can not access the seceret")
     }
 
-    if(secret === process.env.ADMIN_SECRET){
+    if (secret === process.env.ADMIN_SECRET) {
         const token = jwt.sign(
-        {
-            isAdmin : true
-        },
-        process.env.ACCESS_TOKEN_SECRET,{
-            expiresIn:"30d"
+            {
+                isAdmin: true
+            },
+            process.env.ACCESS_TOKEN_SECRET, {
+            expiresIn: "30d"
         }
-    )
-
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200,
-            {token},
-            "Admin Login Successfully"
         )
-    )
 
-    }else{
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200,
+                    { token },
+                    "Admin Login Successfully"
+                )
+            )
+
+    } else {
         throw new ApiError(404, "Invalid Admin secret")
     }
 
-    
+
 
 })
 
 
 //controller for refresh the access token for continue the session without login several times
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const incommingRefreshToken =
+    const incomingRefreshToken =
         req.cookies.refreshToken || req.body.refreshToken;
-    if (!incommingRefreshToken) {
-        throw new ApiError(401, "Unauthorised request");
+
+    if (!incomingRefreshToken) {
+        throw new ApiError(401, "Unauthorized request");
     }
+
     try {
         const decodedToken = jwt.verify(
-            incommingRefreshToken,
+            incomingRefreshToken,
             process.env.REFRESH_TOKEN_SECRET
         );
-        const user = User.findById(decodedToken?._id);
+
+        const user = await User.findById(decodedToken?._id);
+
         if (!user) {
             throw new ApiError(401, "Invalid refresh token");
         }
-        if (incommingRefreshToken !== user?.refreshToken) {
+
+        // Check if the incoming refresh token matches the one stored in the user record
+        if (incomingRefreshToken !== user.refreshToken) {
             throw new ApiError(401, "Refresh token is expired or used");
         }
 
-        const options = {
-            httpOnly: true,
-            secure: true,
-        };
-
-        const { accessToken, newRefreshToken } =
+        // Generate new tokens
+        const { accessToken, refreshToken: newRefreshToken } =
             await generateAccessAndRefreshToken(user._id);
 
+        // Set the new tokens in cookies and send the response
         return res
             .status(200)
-            .cookie("accessToken", accessToken)
-            .cookie("refreshToken", newRefreshToken)
-            .json(
-                new ApiResponse(
-                    200,
-                    { accessToken, refreshToken: newRefreshToken },
-                    "Access Token Refreshed"
-                )
-            );
+            .cookie("accessToken", accessToken, { httpOnly: true, secure: true })
+            .cookie("refreshToken", newRefreshToken, { httpOnly: true, secure: true })
+            .json(new ApiResponse(200, { accessToken, refreshToken: newRefreshToken }, "Access Token Refreshed"));
+
     } catch (error) {
-        throw new ApiError(401, error?.message || "Invalid refresh token");
+        console.error("Error refreshing access token:", error); // Log for debugging
+        throw new ApiError(401, error.message || "Invalid refresh token");
     }
 });
-
 
 
 export {
@@ -239,5 +243,5 @@ export {
     logOutUser,
     adminLogin,
     refreshAccessToken,
-  
+
 };
