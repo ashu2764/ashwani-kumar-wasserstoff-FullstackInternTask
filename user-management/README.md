@@ -3,9 +3,13 @@ This API is part of a microservices architecture that handles user management an
 
 # Features
 User Registration: Allows new users to register with their email, username, and password.
+
 User Login: Authenticates users using their email/username and password, and provides access and refresh tokens.
+
 User Logout: Logs out the user by clearing their refresh token.
+
 Admin Login: Authenticates an admin user using a secret key and provides an access token.
+
 Token Refresh: Refreshes the access token using a valid refresh token.
 
 

@@ -3,12 +3,19 @@ This API is part of a microservices architecture designed for managing auctions 
 
 # Features
 Create Auction: Allows admins to create new auctions.
+
 Get Ongoing Auctions: Fetches all auctions that are currently active.
+
 Get Auction by ID: Retrieves a specific auction by its ID.
+
 Get All Auctions: Admin view to fetch all auctions.
+
 Update Auction: Allows admins to update details of an existing auction.
+
 Delete Auction: Allows admins to delete an auction.
+
 Place Bid: Allows users to place bids on active auctions.
+
 Complete Auction: Marks an auction as completed.
 
 

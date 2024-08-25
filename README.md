@@ -5,9 +5,13 @@ This API is part of a microservices architecture that handles user management an
 
 # Features
 User Registration: Allows new users to register with their email, username, and password.
+
 User Login: Authenticates users using their email/username and password, and provides access and refresh tokens.
+
 User Logout: Logs out the user by clearing their refresh token.
+
 Admin Login: Authenticates an admin user using a secret key and provides an access token.
+
 Token Refresh: Refreshes the access token using a valid refresh token.
 
 ## Auction Management API
@@ -15,12 +19,19 @@ This API is part of a microservices architecture designed for managing auctions 
 
 # Features
 Create Auction: Allows admins to create new auctions.
+
 Get Ongoing Auctions: Fetches all auctions that are currently active.
+
 Get Auction by ID: Retrieves a specific auction by its ID.
+
 Get All Auctions: Admin view to fetch all auctions.
+
 Update Auction: Allows admins to update details of an existing auction.
+
 Delete Auction: Allows admins to delete an auction.
+
 Place Bid: Allows users to place bids on active auctions.
+
 Complete Auction: Marks an auction as completed.
 
 
@@ -38,4 +49,5 @@ Clone the repository
 git clone https://github.com/ashu2764/ashwani-kumar-wasserstoff-FullstackInternTask 
 
 cd auction-management/
+
 cd user-management/
