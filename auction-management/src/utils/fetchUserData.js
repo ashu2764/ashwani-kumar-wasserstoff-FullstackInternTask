@@ -16,7 +16,7 @@ export const fetchUserData = async(token)=>{
    
 
         })
-        console.log(token)
+        
         return response.data
     } catch (error) {
         throw error
