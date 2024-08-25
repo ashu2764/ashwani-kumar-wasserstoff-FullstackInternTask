@@ -5,6 +5,8 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 
 
+
+//function for generate accessAndRefreshTokens
 const generateAccessAndRefreshToken = async (userId) => {
     try {
         const user = await User.findById(userId);
@@ -26,21 +28,27 @@ const generateAccessAndRefreshToken = async (userId) => {
 const registerUser = asyncHandler(async (req, res) => {
     const { email, username, password } = req.body;
 
+    //This logic is for check all fileds are come from body 
     if ([email, username, password].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
     }
 
+
+    //Check for if User with email, username is Already Existed in the Db. 
     const existedUser = await User.findOne({
-        $or: [{ username }, { email }],
+        $or: [{ username }, { email }], //user $or  to find one .if one of them is identical then user id aleady exists
     });
 
+
+    //if user Exsist then throm error
     if (existedUser) {
         throw new ApiError(
             409,
             "User with this email or username is already existed"
         );
     }
-
+    
+    //if everyThing is ok then create user
     const user = await User.create({
         email,
         username: username.toLowerCase(),
@@ -50,6 +58,8 @@ const registerUser = asyncHandler(async (req, res) => {
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     );
+
+    //ckeck for user is created or not
     if (!createdUser) {
         throw new ApiError(500, "Something went wrong while creating the user");
     }
@@ -61,6 +71,8 @@ const registerUser = asyncHandler(async (req, res) => {
         );
 });
 
+
+//controller for login the registered user
 const loginUser = asyncHandler(async (req, res) => {
     const { email, username, password } = req.body;
 
@@ -111,6 +123,8 @@ const loginUser = asyncHandler(async (req, res) => {
         );
 });
 
+
+//Controller for logout the logined user
 const logOutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
@@ -136,7 +150,7 @@ const logOutUser = asyncHandler(async (req, res) => {
 });
 
 
-// ADMIN LOGIN
+// ADMIN LOGIN   Controller
 
 const adminLogin = asyncHandler(async(req,res)=>{
     const {secret} = req.body;
@@ -173,7 +187,7 @@ const adminLogin = asyncHandler(async(req,res)=>{
 })
 
 
-
+//controller for refresh the access token for continue the session without login several times
 const refreshAccessToken = asyncHandler(async (req, res) => {
     const incommingRefreshToken =
         req.cookies.refreshToken || req.body.refreshToken;

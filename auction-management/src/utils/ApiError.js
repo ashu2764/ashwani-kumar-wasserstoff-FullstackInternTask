@@ -1,6 +1,3 @@
-
-//Customized Error Respone 
-
 class ApiError extends Error {
     constructor(
         statusCode,

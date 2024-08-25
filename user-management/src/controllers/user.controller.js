@@ -2,6 +2,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { error } from "console";
+import mongoose from "mongoose";
 
 // GET ALL USERS ONLY ACCESS TO ADMIN
 const getAllUsers = asyncHandler(async (req, res) => {
@@ -19,13 +21,12 @@ const getAllUsers = asyncHandler(async (req, res) => {
 // GET USER BY ID ACCESS BY LOGIN USER
 const getUserByID = asyncHandler(async (req, res) => {
     const userId  = req.params.id;
-    console.log(userId)
 
     if (!userId) {
         throw new ApiError(400, "User ID is required");
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select("-password -refreshToken");
 
     if (!user) {
         throw new ApiError(404, "User not found");
@@ -37,33 +38,20 @@ const getUserByID = asyncHandler(async (req, res) => {
 });
 
 // UPDATE USER PASSWORD
-const updateUser = asyncHandler(async (req, res) => {
-    const userId  = req.params.id;
+const changeCurrentPassword = asyncHandler(async (req, res) => {
     const { oldPassword, newPassword } = req.body;
+    const user = await User.findById(req.user?._id);
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
 
-    if (!oldPassword || !newPassword) {
-        throw new ApiError(400, "Old and new passwords are required");
+    if (!isPasswordCorrect) {
+        throw new ApiError(400, "Invalid old password");
     }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-        throw new ApiError(404, "User not found");
-    }
-
-    // Check if the old password is correct
-    const isMatch = await user.isPasswordCorrect(oldPassword);
-    if (!isMatch) {
-        throw new ApiError(400, "Old password is incorrect");
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    await user.save();
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
 
     return res
         .status(200)
-        .json(new ApiResponse(200, "Password updated successfully"));
+        .json(new ApiResponse(200, {}, "password chanege successfully"));
 });
 
 // DELETE USER
@@ -83,4 +71,22 @@ const deleteUser = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, "User deleted successfully"));
 });
 
-export { getAllUsers, getUserByID, updateUser, deleteUser };
+
+//Get current user Details
+const getCurrentUser = asyncHandler(async(req,res)=>{
+
+    //Find current user , jwt Verified 
+    const user = await User.find(req.user._id).select("-password -refreshToken")
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            201, user, "current user fetched successfully"
+        )
+    )
+})
+
+
+
+export { getAllUsers, getUserByID, changeCurrentPassword, deleteUser, getCurrentUser};

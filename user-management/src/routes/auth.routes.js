@@ -1,13 +1,13 @@
 import { Router } from "express";
 import {
-   
+
     adminLogin,
     loginUser,
     logOutUser,
     refreshAccessToken,
     registerUser,
 } from "../controllers/auth.controller.js";
-import { varifyJWTUser } from "../middelwares/auth.middleware.js";
+import { verifyJWTUser } from "../middelwares/auth.middleware.js";
 
 const router = Router();
 
@@ -17,9 +17,9 @@ router.route("/login").post(loginUser);
 //admin Login
 router.route("/admin-login").post(adminLogin);
 
-//secured Routes
+//secured Routes only for authenticated user
 
-router.route("/logout").post(varifyJWTUser, logOutUser);
-router.route("/refresh-token").post(varifyJWTUser, refreshAccessToken);
+router.route("/logout").post(verifyJWTUser, logOutUser);
+router.route("/refresh-token").post(verifyJWTUser, refreshAccessToken);
 
 export default router;

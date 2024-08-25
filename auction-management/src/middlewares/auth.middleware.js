@@ -1,43 +1,38 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.models.js";
+import { fetchUserData } from "../utils/fetchUserData.js";
 
-// this is the middleware for user authentication
+
+const JWT_SECRET = process.env.ACCESS_TOKEN_SECRET
+
 export const verifyJWTUser = asyncHandler(async (req, res, next) => {
+    const header = req.headers.authorization;
+
+    if(!header || !header.startsWith('Bearer')){
+        throw new ApiError(402, "No token provide, authorization denied")
+    }
+
+    const token = header.split(' ')[1];
     try {
-        //find token
-        const token =
-            req.cookies?.accessToken ||
-            req.header("Authorization")?.replace("Bearer ", "");
+        // verify the token locally first
+        const decoded = jwt.verify(token, JWT_SECRET);
 
-        // Validate Token
-        if (!token) {
-            throw new ApiError(401, "Unauthorized request");
-        }
+        //fetch user details from the User Management Service
 
-        // if velidate then decode the token using JWT
-        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const userDate = await fetchUserData(token);
 
-        //Fetch user frrom Db
-        const user = await User.findById(decodedToken?._id).select(
-            "-password, -refreshToken"
-        );
+        //attch the decode user data to the object
 
-        //Validate user
-        if (!user) {
-            throw new ApiError(401, "Invalid Access Token");
-        }
-
-        //attach requested user to user from Db
-        req.user = user;
-
-        //pass to next middeleware
+        req.user = {...decoded.user, ...userDate}
         next();
     } catch (error) {
-        throw new ApiError(401, error?.message || "invalid access token");
+        throw new ApiError(401, error, "Token is not valid or failed to fetch user data")
+        
     }
 });
+
+
 
 //This middeleare is for Admin authorization
 
@@ -45,13 +40,10 @@ export const verifyJWTAdmin = asyncHandler(async (req, res, next) => {
     let token;
 
     // Check if Authorization header exists and starts with "Bearer"
-    if (
-        req.headers.authorization &&
-        req.headers.authorization.startsWith("Bearer")
-    ) {
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
         try {
             // Extract the token from the Authorization header
-            token = req.headers.authorization.split(" ")[1];
+            token = req.headers.authorization.split(' ')[1];
 
             // Verify the token
             const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
