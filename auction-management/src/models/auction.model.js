@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-const auctionSchema = new mongoose.Schema({
+const auctionSchema = new Schema({
     itemName: {
         type: String,
         required: true,
